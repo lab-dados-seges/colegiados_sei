@@ -1,87 +1,57 @@
 import streamlit as st
-# import os
-# from datetime import datetime
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pandas as pd
 import os
-# from bs4 import BeautifulSoup
-# import re
-# from collections import OrderedDict
 from io import BytesIO
 from selenium.common.exceptions import NoSuchElementException
-# import getpass
 import pyshorteners
 
 # Função para realizar login
 def realizar_login(url, login1, password1, orgao1):
-    """
-    Função para realizar login no sistema SEI.
-
-    Args:
-        url (str): URL do sistema SEI.
-        login1 (str): Nome de usuário para login.
-        password1 (str): Senha para login.
-        orgao1 (str): Nome do órgão para acesso.
-
-    Returns:
-        webdriver: Instância do WebDriver com o usuário autenticado.
-    """
     try:
-        # Inicializa o navegador
         driver = webdriver.Chrome()
         driver.implicitly_wait(0.5)
         driver.get(url)
 
-        # Localiza os elementos de login
         login = driver.find_element(By.XPATH, '//*[@id="txtUsuario"]')
         password = driver.find_element(By.XPATH, '//*[@id="pwdSenha"]')
         orgao = driver.find_element(By.XPATH, '//*[@id="selOrgao"]')
         submit_button = driver.find_element(By.XPATH, '//*[@id="Acessar"]')
 
-        # Preenche as credenciais
         login.send_keys(login1)
         password.send_keys(password1)
         orgao.send_keys(orgao1)
-
-        # Realiza o login
         submit_button.click()
-        time.sleep(3)  # Aguarda carregamento da página após o login
+        time.sleep(3)
 
         print("Login realizado com sucesso!")
         
         time.sleep(1)
-        # Acessa a área de busca
         searching = driver.find_element(By.XPATH, '//*[@id="infraMenu"]/li[14]/a/span')
         searching.click()
         time.sleep(1)
         
-        #selecionar os pesquisar em documentos
         docum_pesq = driver.find_element(By.XPATH, '//*[@id="divOptDocumentos"]/div')
         docum_pesq.click()
         time.sleep(0.3)
         
-        #colocar como tramitação dentro do orgão
         chktram = driver.find_element(By.XPATH, '//*[id="chkSinTramitacao"]/div')
         chktram.click()
         time.sleep(0.2)
 
-        # Restringe busca ao órgão específico
         sel_orgao = driver.find_element(By.XPATH, '//*[@id="divSinRestringirOrgao"]/div')
         sel_orgao.click()
         time.sleep(0.5)
 
-        # Especifica os termos de pesquisa
         espec_pesq = driver.find_element(By.XPATH, '//*[@id="q"]')
         espec_pesq.send_keys('indicação ou retificação ou nomear ou nomeação ou ratificar ou retificar ou representante ou exoneração')
         
-        # Realizar pesquisa por tipo de processo
         tipo_process = driver.find_element(By.XPATH, '//*[@id="selTipoProcedimentoPesquisa"]')
         tipo_process.send_keys("Gestão Administrativa: Conselhos, Comissões, Comitês, Grupos de Trabalho e Juntas")
         time.sleep(0.5)
 
-        # Realiza a pesquisa
         b_pesq = driver.find_element(By.XPATH, '//*[@id="sbmPesquisar"]')
         b_pesq.click()
         time.sleep(3)
@@ -91,74 +61,24 @@ def realizar_login(url, login1, password1, orgao1):
     except Exception as e:
         print(f"Erro durante a busca: {e}")
         return None
-        
-    # except Exception as e:
-    #     print(f"Erro ao realizar o login: {e}")
-    #     return None
 
-# Função principal para busca
-# def buscar_arquivos(driver):
-    # """
-    # Realiza a busca de arquivos no sistema SEI após login.
-
-    # Args:
-    #     driver (webdriver): Instância do WebDriver autenticada.
-    # """
-    # try:
-    #     time.sleep(1)
-    #     # Acessa a área de busca
-    #     searching = driver.find_element(By.XPATH, '//*[@id="infraMenu"]/li[14]/a/span')
-    #     searching.click()
-    #     time.sleep(3)
-
-    #     # Restringe busca ao órgão específico
-    #     sel_orgao = driver.find_element(By.XPATH, '//*[@id="divSinRestringirOrgao"]/div')
-    #     sel_orgao.click()
-    #     time.sleep(1)
-
-    #     # Especifica os termos de pesquisa
-    #     espec_pesq = driver.find_element(By.XPATH, '//*[@id="txtDescricaoPesquisa"]')
-    #     espec_pesq.send_keys('"Projeto Lei" ou "PL" ou "RIC" ou "Projeto de Lei" ou "Requisição de Informação"')
-
-    #     # Realiza a pesquisa
-    #     b_pesq = driver.find_element(By.XPATH, '//*[@id="sbmPesquisar"]')
-    #     b_pesq.click()
-    #     time.sleep(3)
-
-    #     print("Busca realizada com sucesso.\nRestringindo em PL e dentro do MGI.\n\nOs Externo entram como MGI.")
-    # except Exception as e:
-    #     print(f"Erro durante a busca: {e}")
-        
 def extrair_dados(driver):     
-    """
-    Função para realizar web scraping no SEI e retornar os dados em um DataFrame.
-
-    Args:
-        driver (webdriver): Instância do Selenium WebDriver.
-
-    Returns:
-        pd.DataFrame: DataFrame contendo os dados extraídos.
-        
-    """
     def remove_items(lista, item): 
-        """Remove todos os itens iguais a `item` de uma lista.""" 
         return [i for i in lista if i != item]
    
-    # Extraindo os elementos da pesquisa
     tree_elements = driver.find_elements(By.XPATH, '//*[@class="pesquisaTituloEsquerda"]/a')
     list_tree = [element.text for element in tree_elements]
-    trees = remove_items(list_tree, '')  # Remover elementos vazios
+    trees = remove_items(list_tree, '')
 
     abts = driver.find_elements(By.XPATH, '//*[@class="pesquisaSnippet"]')
     list_abts = [element.text for element in abts]
     
-    # Adicionando a verificação de tamanho do abstract
-    max_length = 500  # Defina o tamanho máximo permitido
+    max_length = 500
     list_abts = [abt for abt in list_abts if len(abt) <= max_length]
 
     unidades = driver.find_elements(By.XPATH, '//*[@class="pesquisaMetatag"]')
     list_uni = [element.text.split(':') for element in unidades]
-    info = [sublist_uni[1] for sublist_uni in list_uni if len(sublist_uni) > 1]  # Removendo listas vazias
+    info = [sublist_uni[1] for sublist_uni in list_uni if len(sublist_uni) > 1]
 
     rows = driver.find_elements(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr')
     links = []
@@ -168,35 +88,24 @@ def extrair_dados(driver):
             a = driver.find_element(By.XPATH, f'//*[@id="conteudo"]/table/tbody/tr[{i}]/td[2]/a')
             time.sleep(0.5)
             link = a.get_attribute('href')
-            file_name=a.text
+            file_name = a.text
             links.append(link)
             files_name.append(file_name)
         except Exception as e:
             print(f"Erro ao processar a linha {i}: {e}")
 
-    # print(files_name)
-
-    # Inicializando o encurtador de links
     shortener = pyshorteners.Shortener(api_key='your_api_key', provider='isgd')
     links_curtos = []
     erros = []
     
     for link in links:
         try:
-            # Separando a parte fixa e o hash do link
             base_url, hash_value = link.split('infra_hash=')
-            
-            # Verificando o tamanho da parte fixa do link antes de encurtar
-            if len(base_url) > 1000:  # Ajuste o limite conforme necessário
+            if len(base_url) > 1000:
                 raise ValueError(f"Link base muito longo: {base_url}")
-            
-            # Encurtando a parte fixa do link
             link_curto = shortener.tinyurl.short(base_url)
             time.sleep(0.5)
-            
-            # Recriando o link com o hash
             link_com_hash = link_curto + 'infra_hash=' + hash_value
-            
             links_curtos.append(link_com_hash)
             time.sleep(0.5)
         except Exception as e:
@@ -215,59 +124,39 @@ def extrair_dados(driver):
         
     df = pd.DataFrame(dados)
     
-    original_window = driver.current_window_handle 
-    
-    for index, (link, name) in enumerate(zip(links, files_name)):
-        driver.switch_to.new_window('tab')
-        driver.get(link)
-        with open(f'./colegiados_{name}.html', 'w', encoding='utf-8', errors='ignore') as file:
-            file.write(driver.page_source)        
-        driver.close()
-        driver.switch_to.window(original_window)
-    
-    return df
-
+    return df, links, files_name
 
 def navegar_paginas(driver):
-    """
-    Loop para navegar por todas as páginas até que não haja mais um botão 'Próxima'.
-    Retorna um DataFrame consolidado com os dados de todas as páginas.
-    """
-    dados_consolidados = pd.DataFrame()  # DataFrame vazio para acumular os dados
+    dados_consolidados = pd.DataFrame()
+    links_consolidados = []
+    files_name_consolidados = []
 
     while True:
         try:
-            # Extrair os dados da página atual e adicionar ao DataFrame consolidado
-            df_pagina = extrair_dados(driver)
+            df_pagina, links, files_name = extrair_dados(driver)
             dados_consolidados = pd.concat([dados_consolidados, df_pagina], ignore_index=True)
+            links_consolidados.extend(links)
+            files_name_consolidados.extend(files_name)
 
-            # Procurar o botão "Próxima"
             next_page = driver.find_element("xpath", '//*[@id="conteudo"]/div[2]/div[3]/a')
-
-            # Verificar se o botão "Próxima" tem o atributo 'href'
             proxima_href = next_page.get_attribute('href')
             time.sleep(3)
             if not proxima_href:
                 print("Não há mais páginas. Encerrando navegação.")
-                break  # Sai do loop se não houver link para a próxima página
+                break
 
-            # Clicar no botão "Próxima"
             next_page.click()
-            time.sleep(10)  # Aguarda o carregamento da próxima página
+            time.sleep(10)
 
         except NoSuchElementException:
             print("Botão 'Próxima' não encontrado. Encerrando navegação.")
-            break  # Sai do loop se o botão "Próxima" não existir
+            break
 
         except Exception as e:
             print(f"Erro inesperado: {e}")
-            break  # Sai do loop em caso de erro inesperado
+            break
 
-    # Fechar o navegador após o término
-    # driver.close()
-    # driver.quit()
-
-    return dados_consolidados
+    return dados_consolidados, links_consolidados, files_name_consolidados
 
 def gerar_excel(dados_consolidados):
     output = BytesIO()
@@ -275,6 +164,16 @@ def gerar_excel(dados_consolidados):
         dados_consolidados.to_excel(writer, index=False, sheet_name="Dados")
     processed_data = output.getvalue()
     return processed_data
+
+def baixar_documentos(driver, links, files_name):
+    original_window = driver.current_window_handle 
+    for index, (link, name) in enumerate(zip(links, files_name)):
+        driver.switch_to.new_window('tab')
+        driver.get(link)
+        with open(f'./colegiados_{name}.html', 'w', encoding='utf-8', errors='ignore') as file:
+            file.write(driver.page_source)        
+        driver.close()
+        driver.switch_to.window(original_window)
 
 # Interface Streamlit
 st.title("Colegiados no SEI")
@@ -285,14 +184,11 @@ login1 = st.text_input("Login")
 password1 = st.text_input("Senha", type="password")
 orgao1 = st.text_input("Órgão")
 
-# TO DO: fazer o __main__
-
 if st.button("Executar Busca"):
     with st.spinner("Realizando login e extração..."):
         driver = realizar_login(url, login1, password1, orgao1)
-        # buscar_arquivos(driver)
         if driver:
-            df = navegar_paginas(driver)
+            df, links, files_name = navegar_paginas(driver)
             st.dataframe(df)
             
             excel_data = gerar_excel(df)
@@ -303,3 +199,7 @@ if st.button("Executar Busca"):
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
             
+            if st.button("Baixar documentos em HTML"):
+                with st.spinner("Baixando documentos..."):
+                    baixar_documentos(driver, links, files_name)
+                st.success("Documentos baixados com sucesso!")
