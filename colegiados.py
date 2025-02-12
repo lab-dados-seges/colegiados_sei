@@ -178,7 +178,7 @@ def baixar_documentos(driver, links, files_name):
 st.title("Colegiados no SEI")
 
 st.header("Configurações de Login")
-url1 = st.text_input("URL do SEI", value="https://sei.economia.gov.br/")
+url = st.text_input("URL do SEI", value="https://sei.economia.gov.br/")
 login1 = st.text_input("Login")
 password1 = st.text_input("Senha", type="password")
 orgao1 = st.text_input("Órgão")
