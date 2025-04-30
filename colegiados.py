@@ -3,7 +3,6 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pandas as pd
-import os
 from io import BytesIO
 from selenium.common.exceptions import NoSuchElementException
 import pyshorteners
@@ -24,14 +23,14 @@ def realizar_login(url, login1, password1, orgao1):
         password.send_keys(password1)
         orgao.send_keys(orgao1)
         submit_button.click()
-        time.sleep(3)
+        # time.sleep()
 
         print("Login realizado com sucesso!")
         
-        time.sleep(1)
+        time.sleep(0.2)
         searching = driver.find_element(By.XPATH, '//*[@id="infraMenu"]/li[14]/a/span')
         searching.click()
-        time.sleep(1)
+        time.sleep(0.3)
         
         docum_pesq = driver.find_element(By.XPATH, '//*[@id="divOptDocumentos"]/div')
         docum_pesq.click()
